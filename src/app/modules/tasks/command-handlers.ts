@@ -88,8 +88,6 @@ const addTask: CommandHandlerFunction<never> = async () => {
  * @public
  *
  * Marks task(s) as complete for the provided task titles
- *
- * @param param0
  */
 const completeTask: CommandHandlerFunction<[{ title: string[] }]> = async ({
   title: taskTitlesToComplete,
