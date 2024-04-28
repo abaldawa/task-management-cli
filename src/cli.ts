@@ -26,7 +26,7 @@ const start = async () => {
     });
 
     // Process command
-    await program.parseAsync(process.argv);
+    await program.parseAsync();
   } catch (error: unknown) {
     logger.error(`Error occurred. ${error}`);
     process.exit(1);
