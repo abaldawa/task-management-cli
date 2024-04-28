@@ -5,36 +5,8 @@
 import { Separator, input, select } from '@inquirer/prompts';
 import { CommandHandlerFunction } from '../../utils/cli/types';
 import { logger } from '../../utils/cli/logger';
+import { confirmAction } from '../../utils/cli/cli';
 import * as taskModel from '../../database/models/tasks';
-
-/**
- * @private
- *
- * Finds tasks id by task titles
- *
- * @param taskTitles
- * @returns
- */
-const findTaskIdsByTaskTitles = async (
-  taskTitles: string[],
-): Promise<string[]> => {
-  const tasks = await taskModel.getAll();
-  const matchedTaskIds: string[] = [];
-
-  for (const taskTitle of taskTitles) {
-    const foundTask = tasks.find(
-      (task) => task.title.toLowerCase() === taskTitle.toLowerCase(),
-    );
-
-    if (!foundTask) {
-      throw new Error(`Task title '${taskTitle}' not found`);
-    }
-
-    matchedTaskIds.push(foundTask.id);
-  }
-
-  return matchedTaskIds;
-};
 
 /**
  * @public
@@ -70,7 +42,7 @@ const listAllTasks: CommandHandlerFunction<never> = async () => {
       break;
     }
 
-    console.clear();
+    logger.clearConsole();
   }
 };
 
@@ -80,78 +52,136 @@ const listAllTasks: CommandHandlerFunction<never> = async () => {
  * Adds task to the task list
  */
 const addTask: CommandHandlerFunction<never> = async () => {
-  const tasks = await taskModel.getAll();
+  while (true) {
+    const newTask: Omit<taskModel.Task, 'id'> = {
+      title: await input({
+        message: 'Enter task name',
+        validate: (value) => {
+          return !value.trim() ? 'Task name cannot be empty' : true;
+        },
+      }),
+      description: await input({
+        message: 'Enter task description',
+        validate: (value) => {
+          return !value.trim() ? 'Task description cannot be empty' : true;
+        },
+      }),
+      status: 'NOT_COMPLETED',
+    };
 
-  const newTask: Omit<taskModel.Task, 'id'> = {
-    title: await input({
-      message: 'Enter task name',
-      validate: (value) => {
-        if (!value.trim()) {
-          return 'Task name cannot be empty';
-        }
+    await taskModel.add(newTask);
 
-        const existingTask = tasks.find(
-          (task) => task.title.toLowerCase() === value.toLowerCase(),
-        );
+    logger.log(`Task '${newTask.title}' added successfully`);
 
-        return existingTask
-          ? `Task with title '${existingTask.title}' already exists`
-          : true;
-      },
-    }),
-    description: await input({
-      message: 'Enter task description',
-      validate: (value) => {
-        return !value.trim() ? 'Task description cannot be empty' : true;
-      },
-    }),
-    status: 'NOT_COMPLETED',
-  };
+    const addMore = await confirmAction('Do you want to add more tasks?');
 
-  await taskModel.add(newTask);
-
-  logger.log(`Task '${newTask.title}' added successfully`);
+    if (!addMore) {
+      break;
+    }
+  }
 };
 
 /**
  * @public
  *
- * Mark tasks as complete for the provided task titles
+ * Mark task as complete based on user selection
  */
-const completeTask: CommandHandlerFunction<[{ titles: string[] }]> = async ({
-  titles: taskTitlesToComplete,
-}) => {
-  const taskIdsToComplete = await findTaskIdsByTaskTitles(taskTitlesToComplete);
+const completeTask: CommandHandlerFunction<never> = async () => {
+  let incompleteTasks: taskModel.Task[] | undefined;
+  let wasTaskCompleted = false;
 
-  await taskModel.update((task) => {
-    if (taskIdsToComplete.includes(task.id)) {
-      return {
-        ...task,
-        status: 'COMPLETED',
-      };
+  while (true) {
+    if (!incompleteTasks || wasTaskCompleted) {
+      const tasks = await taskModel.getAll();
+
+      incompleteTasks = tasks.filter((task) => task.status === 'NOT_COMPLETED');
+      wasTaskCompleted = false;
     }
 
-    return task;
-  });
+    const taskIdToCompleteOrExit = await select<(string & {}) | 'EXIT'>({
+      message: incompleteTasks.length
+        ? 'Select a task to complete'
+        : 'No incomplete task found',
+      choices: [
+        ...incompleteTasks.map((task) => ({
+          value: task.id,
+          name: task.title,
+          description: task.description,
+        })),
+        new Separator(),
+        {
+          name: 'Exit',
+          value: 'EXIT',
+        },
+      ],
+    });
 
-  logger.log(`Marked tasks '${taskTitlesToComplete.join(', ')}' as completed`);
+    if (taskIdToCompleteOrExit === 'EXIT') {
+      break;
+    }
+
+    await taskModel.update((task) => {
+      if (taskIdToCompleteOrExit === task.id) {
+        return {
+          ...task,
+          status: 'COMPLETED',
+        };
+      }
+      return task;
+    });
+
+    wasTaskCompleted = true;
+
+    logger.clearConsole();
+  }
 };
 
 /**
  * @public
  *
- * Remove tasks by titles
+ * Remove task based on user selection
  */
-const removeTask: CommandHandlerFunction<[{ titles: string[] }]> = async ({
-  titles: taskTitlesToRemove,
-}) => {
-  const taskIdsToRemove = await findTaskIdsByTaskTitles(taskTitlesToRemove);
+const removeTask: CommandHandlerFunction<never> = async () => {
+  let tasks: taskModel.Task[] | undefined;
+  let wasTaskRemoved = false;
 
-  await taskModel.remove((task) => taskIdsToRemove.includes(task.id));
+  while (true) {
+    if (!tasks || wasTaskRemoved) {
+      tasks = await taskModel.getAll();
+      wasTaskRemoved = false;
+    }
 
-  logger.log(
-    `Removed tasks(s) '${taskTitlesToRemove.join(', ')}' from the list`,
-  );
+    const taskIdToRemoveOrExit = await select<(string & {}) | 'EXIT'>({
+      message: tasks.length
+        ? 'Select a task to remove'
+        : 'No task available to remove',
+      choices: [
+        ...tasks.map((task) => ({
+          value: task.id,
+          name: `${task.status === 'COMPLETED' ? '[✅]' : '[ ]'} ${task.title}`,
+          description: task.description,
+        })),
+        new Separator(),
+        {
+          name: 'Exit',
+          value: 'EXIT',
+        },
+      ],
+    });
+
+    if (taskIdToRemoveOrExit === 'EXIT') {
+      break;
+    }
+
+    const confirmDelete = await confirmAction('Confirm remove?');
+
+    if (confirmDelete) {
+      await taskModel.remove((task) => task.id === taskIdToRemoveOrExit);
+      wasTaskRemoved = true;
+    }
+
+    logger.clearConsole();
+  }
 };
 
 export { listAllTasks, addTask, completeTask, removeTask };

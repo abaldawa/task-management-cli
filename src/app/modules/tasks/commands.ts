@@ -28,16 +28,12 @@ const taskCommands: Command[] = [
 
   new Command('complete')
     .description('Mark tasks as complete')
-    .usage(`--titles "title one" "title two"`)
     .allowExcessArguments(false)
-    .requiredOption('--titles <string...>', 'titles of tasks to complete')
     .action(commandHandler(completeTask as GenericCommandHandlerFunction)),
 
   new Command('remove')
     .description('Remove tasks from the list')
-    .usage(`--titles "title one" "title two"`)
     .allowExcessArguments(false)
-    .requiredOption('--titles <string...>', 'titles of tasks to remove')
     .action(commandHandler(removeTask as GenericCommandHandlerFunction)),
 ];
 

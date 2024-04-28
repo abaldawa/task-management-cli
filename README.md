@@ -23,14 +23,14 @@ Latest Node.js must be installed
 2. `cd task-management-cli`
 3. execute `npm i`
 4. execute `npm run build` (This will compile the project from TS to JS under `build` folder)
-5. execute `node ./build/cli.js` to run the cli application and see the run option. (NOTE: Alternatively running `npm run cli -- [command] [options]` also works)
+5. execute `node ./build/cli.js` to run the cli application and see the run option. (NOTE: Alternatively running `npm run cli [add | list | complete | remove]` also works)
 
 Supports below commands
 
 - `node ./build/cli.js add`: Add a new task.
 - `node ./build/cli.js list`: Display a list of all tasks.
-- `node ./build/cli.js complete --titles "example title one" "example title two"`: Mark tasks as completed based on provided task titles.
-- `node ./build/cli.js remove --titles "example title one" "example title two"`: Remove tasks from the list based on provided task titles.
+- `node ./build/cli.js complete`: Mark task as completed based on user selection.
+- `node ./build/cli.js remove`: Remove tasks from the list based on user selection.
 
 When the application is started for the first time, `tasks.json` file is created at `task-management-cli/db/tasks.json` and on the subsequent runs the task data is picked from it and saved on it.
 
@@ -38,7 +38,7 @@ When the application is started for the first time, `tasks.json` file is created
 
 Below video shows the task management CLI functionality in action
 
-https://github.com/abaldawa/task-management-cli/assets/5449692/45380a2f-f5e0-4b61-8cf4-25922a85b48c
+https://github.com/abaldawa/task-management-cli/assets/5449692/6f3b5bff-0ff8-4c88-98f8-4bdfa3977a3e
 
 ### Install and run as a CLI globally:
 
@@ -55,7 +55,7 @@ https://github.com/abaldawa/task-management-cli/assets/5449692/45380a2f-f5e0-4b6
 
    Below video demonstrates the global CLI installation and invoking task-management-cli
 
-   https://github.com/abaldawa/task-management-cli/assets/5449692/43c909e8-5580-4a9b-a6c1-7f46c604a9e0
+   https://github.com/abaldawa/task-management-cli/assets/5449692/62aeb93b-e24d-4eef-a170-4f85848babd5
 
 ### Design and implementation
 

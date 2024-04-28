@@ -11,6 +11,7 @@ import { program } from 'commander';
 const logger = Object.freeze({
   log: console.log,
   error: program.error.bind(program),
+  clearConsole: console.clear,
 });
 
 export { logger };
