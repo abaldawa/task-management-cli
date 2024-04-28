@@ -40,6 +40,23 @@ Below video shows the task management CLI functionality in action
 
 https://github.com/abaldawa/task-management-cli/assets/5449692/45380a2f-f5e0-4b61-8cf4-25922a85b48c
 
+### Install and run as a CLI globally:
+
+1. `git clone https://github.com/abaldawa/task-management-cli.git`
+2. `cd task-management-cli`
+3. execute `npm i`
+4. execute `npm run build` (This will compile the project from TS to JS under `build` folder)
+5. execute `npm link` (Links and makes `task-management-cli` available on global path)
+6. Execute from any path `task-management-cli` to run the cli application and see the run option.
+
+   Example:
+
+   - `task-management-cli [add | list | complete | remove]`
+
+   Below video demonstrates the global CLI installation and invoking task-management-cli
+
+   https://github.com/abaldawa/task-management-cli/assets/5449692/43c909e8-5580-4a9b-a6c1-7f46c604a9e0
+
 ### Design and implementation
 
 1. The application architecture is modular and flexible hence the codebase is scalable.

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * @author Abhijit Baldawa
  */
@@ -16,7 +18,7 @@ const start = async () => {
     const commands = getAllCommands();
 
     // Add cli description
-    program.description('CLI for task management');
+    program.name('task-management-cli').description('CLI for task management');
 
     // Attach all commands to commander interface
     commands.forEach((command) => {
