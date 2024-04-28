@@ -1,6 +1,6 @@
 # task-management-cli
 
-## Author: Abhijit Baldawa
+### Author: Abhijit Baldawa
 
 ### Description
 
@@ -15,7 +15,7 @@ A command-line interface (CLI) application for managing tasks. Added tasks are s
 
 ### Pre-requisites
 
-1. Latest Node.js must be installed
+Latest Node.js must be installed
 
 ### How to run:
 
@@ -46,7 +46,7 @@ https://github.com/abaldawa/task-management-cli/assets/5449692/45380a2f-f5e0-4b6
 2. `cd task-management-cli`
 3. execute `npm i`
 4. execute `npm run build` (This will compile the project from TS to JS under `build` folder)
-5. execute `npm link` (Links and makes `task-management-cli` available on global path)
+5. execute `npm link` (or `npm i -g`) (Links and makes `task-management-cli` available on global path)
 6. Execute from any path `task-management-cli` to run the cli application and see the run option.
 
    Example:
@@ -64,5 +64,6 @@ https://github.com/abaldawa/task-management-cli/assets/5449692/45380a2f-f5e0-4b6
 3. `src/app/modules/tasks` contains task management module with `command-handler.ts` exporting methods which handle the commands and `commands.ts` binds and exports all the supported commands with their associated command handler methods.
 4. `src/app/database/models` contains model files related to database.
 5. `src/app/database/models/tasks.ts` contains task model and it exports methods to interact with saved tasks in the `task-management-cli.git/db/tasks.json` file.
-6. `src/app/commands/index.ts` exports methods which returns commands supported by all modules.
+6. `src/app/commands/index.ts` exports method which returns commands supported by all modules.
 7. `src/app/utils/cli/command-handler.ts` is the central command handler. This method receives every command and then delegate it to the appropriate command handler. It also handles error in central place for all target command handlers which makes observability and logging much easier.
+8. `src/app/cli` is the entry point of the CLI app.
