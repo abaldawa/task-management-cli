@@ -8,6 +8,35 @@ import { logger } from '../../utils/cli/logger';
 import * as taskModel from '../../database/models/tasks';
 
 /**
+ * @private
+ *
+ * Finds tasks id by task titles
+ *
+ * @param taskTitles
+ * @returns
+ */
+const findTaskIdsByTaskTitles = async (
+  taskTitles: string[],
+): Promise<string[]> => {
+  const tasks = await taskModel.getAll();
+  const matchedTaskIds: string[] = [];
+
+  for (const taskTitle of taskTitles) {
+    const foundTask = tasks.find(
+      (task) => task.title.toLowerCase() === taskTitle.toLowerCase(),
+    );
+
+    if (!foundTask) {
+      throw new Error(`Task title '${taskTitle}' not found`);
+    }
+
+    matchedTaskIds.push(foundTask.id);
+  }
+
+  return matchedTaskIds;
+};
+
+/**
  * @public
  *
  * Lists all the available tasks
@@ -87,28 +116,23 @@ const addTask: CommandHandlerFunction<never> = async () => {
 /**
  * @public
  *
- * Marks task(s) as complete for the provided task titles
+ * Mark tasks as complete for the provided task titles
  */
-const completeTask: CommandHandlerFunction<[{ title: string[] }]> = async ({
-  title: taskTitlesToComplete,
+const completeTask: CommandHandlerFunction<[{ titles: string[] }]> = async ({
+  titles: taskTitlesToComplete,
 }) => {
-  const response = await taskModel.find(
-    taskTitlesToComplete,
-    (taskTitleToComplete, task) =>
-      task.title.toLowerCase() === taskTitleToComplete.toLowerCase(),
-    (taskTitleToComplete) => `Task title '${taskTitleToComplete}' not found`,
-  );
+  const taskIdsToComplete = await findTaskIdsByTaskTitles(taskTitlesToComplete);
 
-  if (!response.success) {
-    throw new Error(response.errorMessage);
-  }
+  await taskModel.update((task) => {
+    if (taskIdsToComplete.includes(task.id)) {
+      return {
+        ...task,
+        status: 'COMPLETED',
+      };
+    }
 
-  const taskIdsToComplete = response.tasks.map((task) => task.id);
-
-  await taskModel.update(taskIdsToComplete, (task) => ({
-    ...task,
-    status: 'COMPLETED',
-  }));
+    return task;
+  });
 
   logger.log(`Marked tasks '${taskTitlesToComplete.join(', ')}' as completed`);
 };
@@ -118,23 +142,12 @@ const completeTask: CommandHandlerFunction<[{ title: string[] }]> = async ({
  *
  * Remove tasks by titles
  */
-const removeTask: CommandHandlerFunction<[{ title: string[] }]> = async ({
-  title: taskTitlesToRemove,
+const removeTask: CommandHandlerFunction<[{ titles: string[] }]> = async ({
+  titles: taskTitlesToRemove,
 }) => {
-  const response = await taskModel.find(
-    taskTitlesToRemove,
-    (taskTitleToComplete, task) =>
-      task.title.toLowerCase() === taskTitleToComplete.toLowerCase(),
-    (taskTitleToComplete) => `Task title '${taskTitleToComplete}' not found`,
-  );
+  const taskIdsToRemove = await findTaskIdsByTaskTitles(taskTitlesToRemove);
 
-  if (!response.success) {
-    throw new Error(response.errorMessage);
-  }
-
-  const taskIdsToRemove = response.tasks.map((task) => task.id);
-
-  await taskModel.remove(taskIdsToRemove);
+  await taskModel.remove((task) => taskIdsToRemove.includes(task.id));
 
   logger.log(
     `Removed tasks(s) '${taskTitlesToRemove.join(', ')}' from the list`,

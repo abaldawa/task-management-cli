@@ -43,7 +43,7 @@ const COLLECTION_FILE_PATH = path.join(DB_FOLDER_PATH, COLLECTION_FILE_NAME);
  *
  * @param tasks - updated tasks
  */
-const updateCollection = async (tasks: Task[]) =>
+const updateCollection = async (tasks: Task[]): Promise<void> =>
   fs.writeFile(COLLECTION_FILE_PATH, JSON.stringify(tasks, null, 2), {
     encoding: 'utf-8',
   });
@@ -54,7 +54,7 @@ const updateCollection = async (tasks: Task[]) =>
  * Creates and initializes `tasks.json` file if it
  * does not exist in the desired location
  */
-const init = async () => {
+const init = async (): Promise<void> => {
   // 1. Create a db folder if it does not exist
   await fs.mkdir(DB_FOLDER_PATH, { recursive: true });
 
@@ -72,7 +72,7 @@ const init = async () => {
   await fd.close();
 };
 
-const getAll = async () => {
+const getAll = async (): Promise<Task[]> => {
   const collectionData = await fs.readFile(COLLECTION_FILE_PATH, {
     encoding: 'utf-8',
   });
@@ -80,33 +80,7 @@ const getAll = async () => {
   return JSON.parse(collectionData) as Task[];
 };
 
-const find = async <SearchCriteria>(
-  searchCriterias: SearchCriteria[],
-  matcherFn: (criteria: SearchCriteria, task: Readonly<Task>) => boolean,
-  getNotFoundMessage: (searchCriteria: SearchCriteria) => string,
-): Promise<
-  { success: false; errorMessage: string } | { success: true; tasks: Task[] }
-> => {
-  const tasks = await getAll();
-  const matchedTasks: Task[] = [];
-
-  for (const searchCriteria of searchCriterias) {
-    const foundTask = tasks.find((task) => matcherFn(searchCriteria, task));
-
-    if (!foundTask) {
-      return {
-        success: false,
-        errorMessage: getNotFoundMessage(searchCriteria),
-      };
-    }
-
-    matchedTasks.push(foundTask);
-  }
-
-  return { success: true, tasks: matchedTasks };
-};
-
-const add = async (task: Omit<Task, 'id'>) => {
+const add = async (task: Omit<Task, 'id'>): Promise<Task> => {
   const tasks = await getAll();
   const newTask: Task = { ...task, id: crypto.randomUUID() };
 
@@ -116,25 +90,22 @@ const add = async (task: Omit<Task, 'id'>) => {
   return newTask;
 };
 
-const remove = async (taskIds: string[]) => {
+const remove = async (
+  shouldRemove: (task: Readonly<Task>) => boolean,
+): Promise<void> => {
   const tasks = await getAll();
-  await updateCollection(tasks.filter((task) => !taskIds.includes(task.id)));
+  const updatedTasks = tasks.filter((task) => !shouldRemove(task));
+
+  return updateCollection(updatedTasks);
 };
 
 const update = async (
-  taskIds: string[],
   getUpdatedTask: (task: Readonly<Task>) => Task,
-) => {
+): Promise<void> => {
   const tasks = await getAll();
-  const updatedTasks = tasks.map((task) => {
-    if (taskIds.includes(task.id)) {
-      return getUpdatedTask(task);
-    }
+  const updatedTasks = tasks.map(getUpdatedTask);
 
-    return task;
-  });
-
-  await updateCollection(updatedTasks);
+  return updateCollection(updatedTasks);
 };
 
-export { Task, init, getAll, add, update, remove, find };
+export { Task, init, getAll, add, update, remove };
