@@ -21,7 +21,7 @@ import { logger } from './logger';
  */
 const commandHandler =
   (handlerFn: GenericCommandHandlerFunction): GenericCommandHandlerFunction =>
-  async (...args: unknown[]) => {
+  async (...args) => {
     try {
       await handlerFn(...args);
     } catch (error: unknown) {
